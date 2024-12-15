@@ -1,5 +1,8 @@
 use std::path::PathBuf;
 
+// !!! Dependencies !!!
+use serde::{Deserialize, Serialize};
+
 #[derive(Debug)]
 pub struct OpenVault {
     vault: Vault,
@@ -73,7 +76,7 @@ impl Vault {
         if self.path.exists() {
             return Err(std::io::Error::new(std::io::ErrorKind::AlreadyExists, "Vault already exists"));
         }
-        match &self.group {
+        let create_file_result = match &self.group {
             None => {
                 // create vault in file system
                 match std::fs::File::create(&self.path) {
@@ -94,7 +97,17 @@ impl Vault {
                     Err(e) => Err(e),
                 }
             },
-        }
+        };
+        // write outer config to vault file
+        let outer_config_toml = toml::to_string(&self.outer_config).unwrap();
+        let write_outer_config_result = match std::fs::write(&self.path, outer_config_toml) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
+        };
+
+        create_file_result?;
+        write_outer_config_result?;
+        Ok(())
     }
     pub fn open(&self) -> OpenVault {
         OpenVault::new(self.clone()) 
@@ -113,7 +126,7 @@ impl VaultGroup {
         }
     }
 }
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct OuterConfig {
     compression: String, 
     cipher_id: String,
@@ -141,7 +154,7 @@ impl OuterConfig {
         }
     }
 }
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct KDFParameters {
     kdf: String,
     rounds: u64,

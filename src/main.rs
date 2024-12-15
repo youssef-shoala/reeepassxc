@@ -137,6 +137,7 @@ fn main() {
         Commands::List {vault_group_name} => {
             println!("Listing vaults");
         },
+        //creates empty file with vault name
         Commands::Create {vault_name, vault_group_name} => {
             println!("Creating vault: {:?}", vault_name);
 
