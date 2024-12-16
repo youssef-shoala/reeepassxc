@@ -144,7 +144,6 @@ fn main() {
     let vaults: Vec<Vault> = gen_vaults;
     // init client
     let mut client = Client::new(config, vaults);
-    println!("{:?}", client);
     // cli parser
     let args = Cli::parse();
     match args.cmd {
@@ -199,9 +198,11 @@ fn main() {
                         let mut password = "".to_string();
                         match entry_input.as_str() {
                             "" => {
-                                // TODO REQUIRED generate password
+                                // generate password
                                 println!("Generating password");
                                 password = "".to_string();
+                                //password = Client::generate_password();
+                                println!("Generated password: {:?}", password);
                             },
                             _ => {
                                 password = entry_input.clone();

@@ -40,14 +40,11 @@ impl Config {
         let config_content = toml::to_string(&self).unwrap();
         let result: Result<(), std::io::Error>;
         if Config::file_exists() {
-//            println!("Saving file override the curr config file.");
             result = fs::write(config_path, config_content)
         } else {
-//            println!("Saving file but the config file does not exist.");
             //create folder
             match fs::create_dir_all("./reeepassdata/"){
                 Ok(_) => {
-//                    println!("Created folder");
                     ()
                 },
                 Err(e) => {
@@ -62,16 +59,13 @@ impl Config {
         let config_path = Path::new("./reeepassdata/config.toml");
         let config: Config;
         if Config::file_exists() {
-//            println!("Reading file and the config file exists.");
             let config_content = fs::read_to_string(config_path).expect("Unable to read file");
             config = toml::from_str(&config_content).unwrap();
         } else {
-//            println!("Reading file but the config file does not exist. Creating default config and saving to config file.");
             let default_vaults_path = Path::new("./reeepassdata/vaults/");
             config = Config::new(default_vaults_path.to_path_buf());
             match config.save_to_file() {
                 Ok(_) => {
-//                    println!("Config saved to default file");
                     ()
                 },
                 Err(e) => {

@@ -30,9 +30,7 @@ impl OpenVault {
         let mut content_file = archive.by_name_decrypt(content_file_name, password.as_bytes()).unwrap();
         let mut content = String::new();
         content_file.read_to_string(&mut content).unwrap();
-        println!("{}", content);
         let vault_contents = Path::new(content_file_name).to_path_buf();
-        println!("Vault contents pathbuf: {:?}", vault_contents);
         //create parent folder
         let parent_folder = vault_contents.parent().unwrap();
         std::fs::create_dir_all(parent_folder).unwrap();
@@ -63,13 +61,11 @@ impl OpenVault {
             .unix_permissions(0o755);
         let path = Path::new("./reeepassdata/open-vault/open-vault.kdbx");
         let path_str = path.to_str().unwrap();
-        println!("Adding file {:?} as {:?}...", path, path_str);
         zip.start_file(path_str, options).unwrap();
         let mut f = std::fs::File::open(path).unwrap();
         let file_size = std::fs::metadata(path).unwrap().len();
         let mut buffer = vec![0u8; file_size as usize];
         f.read_exact(&mut buffer).unwrap();
-        println!("buffer: {:?}", &buffer);
         zip.write_all(&buffer).unwrap();
         buffer.clear();
         std::fs::remove_dir_all("./reeepassdata/open-vault").unwrap();
@@ -93,7 +89,6 @@ impl OpenVault {
         //get open vault contents path
         let binding = self.get_vault_contents_path();
         let vault_contents_path = binding.as_path().to_str().unwrap();
-        println!("{:?}", vault_contents_path);
         //write to file
         let mut vault_contents = OpenOptions::new().append(true).open(vault_contents_path).unwrap();
         writeln!(vault_contents, "{}", entry_json).unwrap();
@@ -103,7 +98,6 @@ impl OpenVault {
         //get open vault contents path
         let binding = self.get_vault_contents_path();
         let vault_contents_path = binding.as_path().to_str().unwrap();
-        println!("{:?}", vault_contents_path);
         //read from file
         let mut entries: Vec<Entry> = Vec::new();
         let mut contents = String::new();
