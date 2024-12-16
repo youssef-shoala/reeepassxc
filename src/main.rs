@@ -178,6 +178,15 @@ fn main() {
             let mut cli_mode = true;
             while cli_mode {
                 match user_input.as_str() {
+                    "list" => {
+                        println!("Listing entries");
+                        let entries = client.get_open_vault().unwrap().list_entries();
+                        for entry in entries {
+                            println!("{:?}", entry);
+                        }
+                        println!("Enter command: ");
+                        user_input = Client::get_user_input();
+                    },
                     "add" => {
                         println!("Adding entry");
                         println!("Enter username: ");

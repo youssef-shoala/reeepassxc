@@ -108,6 +108,40 @@ impl OpenVault {
         writeln!(vault_contents, "{}", entry_json).unwrap();
         println!("successfully wrote to {:?}", vault_contents_path);
     }
+    pub fn list_entries(&self) -> Vec<Entry> {
+        //get open vault contents path
+        let binding = self.get_vault_contents_path();
+        let vault_contents_path = binding.as_path().to_str().unwrap();
+        println!("{:?}", vault_contents_path);
+        //read from file
+
+//        let mut vault_contents = File::open(vault_contents_path).unwrap();
+//        vault_contents.read_to_string(&mut contents).unwrap();
+
+        let mut entries: Vec<Entry> = Vec::new();
+        let mut contents = String::new();
+        let vaults_contents_path_name = vault_contents_path.to_string();
+        for line in std::fs::read_to_string(vaults_contents_path_name).unwrap().lines() {
+            let entry: Entry = serde_json::from_str(&line).unwrap();
+            entries.push(entry);
+        }
+        entries
+
+
+        
+//        for line in read_to_string(vault_contents_path.to_str()).unwrap().lines() {
+//            result.push(line.to_string())
+//        }
+
+//        while Some(vault_contents.read_line(&mut contents).unwrap()) {
+//            let contents = line.unwrap();
+//
+//            println!("{:?}", contents);
+//            let entry: Entry = serde_json::from_str(&contents).unwrap();
+//            entries.push(entry);
+//        }
+        //deserialize json
+    }
 
 
 
@@ -116,7 +150,7 @@ impl OpenVault {
     }
 }
 #[derive(Serialize, Deserialize, Debug)]
-struct Entry {
+pub struct Entry {
     username: String,
     password: String,
     service_name: Option<String>,
