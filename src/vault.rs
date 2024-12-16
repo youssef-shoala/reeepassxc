@@ -7,7 +7,6 @@ use crate::OpenVault;
 
 // !!! Dependencies !!!
 use serde::{Deserialize, Serialize};
-use zip::write::SimpleFileOptions;
 use zip::CompressionMethod;
 use zip::AesMode;
 use walkdir::WalkDir;
@@ -72,13 +71,16 @@ impl Vault {
         }; 
         */
         let compression = CompressionMethod::Deflated;
+//        let compression = CompressionMethod::Stored;
 //        let cipher_id = AesMode::Aes256;
 
-//        let dst_str = format!("./reeepassdata/{}_vault.zip", self.name);
         let dst_path = Path::new(self.path.as_os_str());
         let mut zip = zip::ZipWriter::new(std::fs::File::create(dst_path).unwrap());
-        let options = SimpleFileOptions::default()
-            .compression_method(compression);
+        zip.set_flush_on_finish_file(true);
+        let options = zip::write::SimpleFileOptions::default()
+            .compression_method(compression)
+//            .aes_encryption(Some("password"), AesMode::Aes256)
+            .unix_permissions(0o755);
         for entry in WalkDir::new("./reeepassdata/open-vault") {
             let entry = entry.unwrap();
             let path = entry.path();
@@ -87,8 +89,10 @@ impl Vault {
                 println!("Adding file {:?} as {:?}...", path, path_str);
                 zip.start_file(path_str, options).unwrap();
                 let mut f = std::fs::File::open(path).unwrap();
-                let mut buffer = Vec::new();
-                f.read_to_end(&mut buffer).unwrap();
+                let file_size = std::fs::metadata(path).unwrap().len();
+                let mut buffer = vec![0u8; file_size as usize];
+                f.read_exact(&mut buffer).unwrap();
+                println!("buffer: {:?}", &buffer);
                 zip.write_all(&buffer).unwrap();
                 buffer.clear();
             } else if path.is_dir() {
@@ -98,11 +102,14 @@ impl Vault {
             }
         }
         // destroy open vault
-        std::fs::remove_dir_all("./reeepassdata/open-vault").unwrap();
+//        std::fs::remove_dir_all("./reeepassdata/open-vault").unwrap();
         Ok(())
     }
     pub fn get_name(&self) -> String {
         self.name.clone()
+    }
+    pub fn get_path(&self) -> PathBuf {
+        self.path.clone()
     }
 }
 

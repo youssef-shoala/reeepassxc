@@ -131,12 +131,38 @@ fn main() {
     // cli parser
     let args = Cli::parse();
     match args.cmd {
+
+
+
         Commands::Open {vault_name, vault_group_name} => {
             println!("Opening vault: {:?}", vault_name);
+            let group_name = vault_group_name.clone();
+            let vault_group_path = match group_name {
+                Some(group_name) => Some(client.get_vaults_path().join(format!("{}/", group_name))),
+                None => None,
+            };
+            let group_path = vault_group_path.clone();
+            let vault_path = match group_path {
+                Some(group_path) => group_path.join(format!("{}.kbdx", vault_name)),
+                None => client.get_vaults_path().join(format!("{}.kbdx", vault_name)),
+            };
+            let target_vault = Vault::new(vault_path, vault_name, vault_group_path, vault_group_name);
+            for vault in client.get_vaults() {
+                if target_vault.get_path() == vault.get_path() {
+                    client.open_vault(target_vault.clone());
+                }
+            }
+            println!("{:?}", client);
         },
+
+
+
         Commands::List {vault_group_name} => {
             println!("Listing vaults");
         },
+
+
+
         //creates empty file with vault name
         Commands::Create {vault_name, vault_group_name} => {
             println!("Creating vault: {:?}", vault_name);
@@ -163,6 +189,9 @@ fn main() {
             }
             println!("{:?}", client);
         },
+
+
+
         Commands::Delete {vault_name, vault_group_name} => {
             println!("Deleting vault: {:?}", vault_name);
         },

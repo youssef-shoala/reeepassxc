@@ -120,7 +120,14 @@ impl Client {
     pub fn get_vaults_path(&self) -> PathBuf {
         self.config.vaults_path.clone()
     }
+    pub fn get_vaults(&self) -> Vec<Vault> {
+        self.vaults.clone()
+    }
     pub fn add_vault(&mut self, vault: Vault) {
         self.vaults.push(vault);
+    }
+    pub fn open_vault(&mut self, vault: Vault) {
+        let open_vault = OpenVault::new(vault);
+        self.open_vault = Some(open_vault);
     }
 }
