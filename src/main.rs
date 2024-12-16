@@ -16,6 +16,8 @@ use walkdir::WalkDir;
     - Delete
     - Move
     - Modify-config 
+    - Unlock-and-copy-to-path
+    - Copy-to-path
 */
 
 #[derive(Parser)]
@@ -74,6 +76,20 @@ enum Commands {
     }, 
 
     */
+    /* TODO REQUIRED
+
+    Unlock-and-copy-to-path {
+        dst_path: Path,
+        vault_name: String,
+        vault_group_name: Option<String>,
+    }, 
+    Copy-to-path {
+        dst_path: Path,
+        vault_name: String,
+        vault_group_name: Option<String>,
+    },
+
+    */
 }
 
 
@@ -83,6 +99,8 @@ enum Commands {
 // Entry Point
 /*
     - instantiate client from client config at ~/.reeepassdata/config.toml
+    - create vaults folder if it doesn't exist
+    - client has a vector of vaults in vaults folder
 */
 
 fn main() {
@@ -153,6 +171,72 @@ fn main() {
                 }
             }
             println!("{:?}", client);
+
+            // enter cli mode
+            println!("Enter command: ");
+            let mut user_input = Client::get_user_input();
+            let mut cli_mode = true;
+            while cli_mode {
+                match user_input.as_str() {
+                    "add" => {
+                        println!("Adding entry");
+                        println!("Enter username: ");
+                        let mut entry_input = Client::get_user_input();
+                        let username = entry_input.clone();
+                        println!("Enter password (blank for client gen password): ");
+                        entry_input = Client::get_user_input();
+                        let mut password = "".to_string();
+                        match entry_input.as_str() {
+                            "" => {
+                                // TODO REQUIRED generate password
+                                println!("Generating password");
+                                password = "".to_string();
+                            },
+                            _ => {
+                                password = entry_input.clone();
+                            },
+                        }
+                        println!("Enter service name: ");
+                        entry_input = Client::get_user_input();
+                        let service_name = entry_input.clone();
+                        println!("Enter url: ");
+                        entry_input = Client::get_user_input();
+                        let url = entry_input.clone();
+                        println!("Enter tags (space separated): ");
+                        entry_input = Client::get_user_input();
+                        let tags = entry_input.clone();
+                        println!("Enter notes: ");
+                        entry_input = Client::get_user_input();
+                        let notes = entry_input.clone();
+                        client.get_open_vault().unwrap().user_create_entry(
+                            username, 
+                            password, 
+                            Some(service_name), 
+                            Some(url), 
+                            Some(tags.split_whitespace().map(|s| s.to_string()).collect()), 
+                            Some(notes)
+                            );
+
+                        println!("Enter command: ");
+                        user_input = Client::get_user_input();
+                    },
+                    "hi" => {
+                        println!("Hello");
+                        println!("Enter command: ");
+                        user_input = Client::get_user_input();
+                    },
+                    "exit" => {
+                        cli_mode = false;
+                    },
+                    _ => {
+                        println!("Invalid command");
+                        println!("Enter command: ");
+                        user_input = Client::get_user_input();
+                    },
+                }
+            }
+            // TODO REQUIRED save vault, compress and encrypt to file
+
         },
 
 

@@ -130,4 +130,15 @@ impl Client {
         let open_vault = OpenVault::new(vault);
         self.open_vault = Some(open_vault);
     }
+    pub fn get_open_vault(&self) -> Option<&OpenVault> {
+        match &self.open_vault {
+            Some(open_vault) => Some(open_vault),
+            None => None,
+        }
+    }
+    pub fn get_user_input() -> String {
+        let mut user_input = String::new();
+        std::io::stdin().read_line(&mut user_input).unwrap();
+        user_input.trim().to_lowercase()
+    }
 }

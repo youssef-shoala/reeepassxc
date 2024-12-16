@@ -1,20 +1,22 @@
 use std::path::Path;
+use std::path::PathBuf;
 use std::fs::File;
 use std::io::Write;
 use std::io::Read;
+use std::fs::OpenOptions;
 
 use crate::Vault;
 
 // !!! Dependencies !!!
 use serde::{Deserialize, Serialize};
-use sled;
+use serde_json;
 
 
 
 #[derive(Debug)]
 pub struct OpenVault {
     vault: Vault,
-    vault_contents: File,
+    vault_contents: PathBuf,
 }
 impl OpenVault {
     pub fn new(vault: Vault) -> Self {
@@ -23,16 +25,20 @@ impl OpenVault {
         let file = std::fs::File::open(vault_path).unwrap();
 
         let mut archive = zip::ZipArchive::new(file).unwrap();
-        println!("{:?}", archive);
+//        println!("{:?}", archive);
 
-        // unzip
-        let mut vault_contents: File = OpenVault::empty_db(); 
         let content_file_name = "./reeepassdata/open-vault/open-vault.kdbx";
         let mut content_file = archive.by_name_decrypt(content_file_name, b"password").unwrap();
-        //let mut content = String::new();
-        //content_file.read_to_string(&mut content).unwrap();
-        std::io::copy(&mut content_file, &mut vault_contents).unwrap();
-        //println!("{}", content);
+        let mut content = String::new();
+        content_file.read_to_string(&mut content).unwrap();
+        println!("{}", content);
+        let vault_contents = Path::new(content_file_name).to_path_buf();
+        println!("Vault contents pathbuf: {:?}", vault_contents);
+        //create parent folder
+        let parent_folder = vault_contents.parent().unwrap();
+        std::fs::create_dir_all(parent_folder).unwrap();
+        let mut file = File::create(vault_contents.clone()).unwrap();
+        file.write_all(content.as_bytes()).unwrap();
 
 //        match archive.extract("./") {
 //            Ok(_) => println!("Extracted"),
@@ -52,15 +58,16 @@ impl OpenVault {
             vault_contents,
         }
     }
-    pub fn create_init_db() -> File {
-        // create vault in file system as .rdbx text file
-        let vault_content_path = Path::new("./reeepassdata/open-vault/open-vault.kdbx");
-        std::fs::create_dir_all("./reeepassdata/open-vault").unwrap();
-        let mut vault_contents_file = File::create(vault_content_path).unwrap();
-        let vault_contents = "Test Line 1\nTest Line 2\nTest Line 3\n";
-        vault_contents_file.write_all(vault_contents.as_bytes()).unwrap();
-        vault_contents_file
-    }
+// >>del below
+//    pub fn create_init_db() -> File {
+//        // create vault in file system as .rdbx text file
+//        let vault_content_path = Path::new("./reeepassdata/open-vault/open-vault.kdbx");
+//        std::fs::create_dir_all("./reeepassdata/open-vault").unwrap();
+//        let mut vault_contents_file = File::create(vault_content_path).unwrap();
+//        let vault_contents = "Test Line 1\nTest Line 2\nTest Line 3\n";
+//        vault_contents_file.write_all(vault_contents.as_bytes()).unwrap();
+//        vault_contents_file
+//    }
 //    pub fn create_init_db() -> sled::Db {
 //        // create vault in file system as sled db
 //        let vault_content_path = Path::new("./reeepassdata/open-vault");
@@ -70,23 +77,71 @@ impl OpenVault {
 //        println!("{:?}", vault_contents);
 //        vault_contents
 //    }
-    fn empty_db() -> File {
+    pub fn empty_db() -> Result<(), std::io::Error> {
         // create vault in file system as .rdbx text file
         let vault_content_path = Path::new("./reeepassdata/open-vault/open-vault.kdbx");
         std::fs::create_dir_all("./reeepassdata/open-vault").unwrap();
         let mut vault_contents_file = File::create(vault_content_path).unwrap();
-        vault_contents_file
+        Ok(())
+    }
+
+
+
+    pub fn user_create_entry (
+        &self,
+        username: String,
+        password: String,
+        service_name: Option<String>,
+        url: Option<String>, 
+        tags: Option<Vec<String>>,
+        notes: Option<String>, 
+    ) {
+        let entry = Entry::new(username, password, service_name, url, tags, notes);
+        //serialize json
+        let entry_json = serde_json::to_string(&entry).unwrap();
+        //get open vault contents path
+        let binding = self.get_vault_contents_path();
+        let vault_contents_path = binding.as_path().to_str().unwrap();
+        println!("{:?}", vault_contents_path);
+        //write to file
+        let mut vault_contents = OpenOptions::new().append(true).open(vault_contents_path).unwrap();
+        writeln!(vault_contents, "{}", entry_json).unwrap();
+        println!("successfully wrote to {:?}", vault_contents_path);
+    }
+
+
+
+    fn get_vault_contents_path(&self) -> PathBuf {
+        self.vault_contents.clone()
     }
 }
 #[derive(Serialize, Deserialize, Debug)]
 struct Entry {
-    id: u64,
-    tags: Vec<String>,
-    service_name: String,
     username: String,
     password: String,
-    url: String, 
-    notes: String, 
+    service_name: Option<String>,
+    url: Option<String>, 
+    tags: Option<Vec<String>>,
+    notes: Option<String>, 
+}
+impl Entry {
+    fn new (
+        username: String,
+        password: String,
+        service_name: Option<String>,
+        url: Option<String>, 
+        tags: Option<Vec<String>>,
+        notes: Option<String>, 
+    ) -> Self {
+        Entry {
+            username,
+            password,
+            service_name,
+            url,
+            tags,
+            notes,
+        }
+    }
 }
 
 

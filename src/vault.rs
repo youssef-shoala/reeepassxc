@@ -53,7 +53,7 @@ impl Vault {
         }
 
         // create init db
-        OpenVault::create_init_db();
+        OpenVault::empty_db().unwrap();
 
 
         // compress it,  encrypt it,  write it to vault file
