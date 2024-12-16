@@ -18,7 +18,7 @@ pub struct OpenVault {
 impl OpenVault {
     pub fn new(vault: Vault) -> Self {
         //#todo read from file
-        let vault_contents = OpenVault::create_init_db(vault.clone());
+        let vault_contents = OpenVault::create_init_db();
        
         OpenVault {
             vault,
@@ -27,7 +27,7 @@ impl OpenVault {
 //            entries,
         }
     }
-    pub fn create_init_db(vault: Vault) -> sled::Db {
+    pub fn create_init_db() -> sled::Db {
         // create vault in file system as sled db
         let inner_config = InnerConfig::new();
         let vault_content_path = Path::new("./reeepassdata/open-vault");
