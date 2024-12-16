@@ -1,39 +1,12 @@
 use std::path::PathBuf;
 
+use crate::OpenVault;
+
 // !!! Dependencies !!!
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
-pub struct OpenVault {
-    vault: Vault,
 
-    inner_config: InnerConfig,
-    entries: Vec<String>,
-}
-impl OpenVault {
-    fn new(vault: Vault) -> Self {
-        let inner_config = InnerConfig {
-            protected_field_cipher_id: "".to_string(),
-            protected_field_cipher_key: "".to_string(),
-            totp_cipher_id: None,
-            totp_cipher_key: None,
-        };
-        let entries = Vec::new();
-        OpenVault {
-            vault,
-            inner_config,
-            entries,
-        }
-    }
-}
-#[derive(Debug)]
-struct InnerConfig {
-    protected_field_cipher_id: String,
-    protected_field_cipher_key: String,
 
-    totp_cipher_id: Option<String>,
-    totp_cipher_key: Option<String>,
-}
 
 #[derive(Debug, Clone)]
 pub struct Vault {
@@ -61,6 +34,7 @@ impl Vault {
             },
         };
 
+        //#todo read from file
         let outer_config = OuterConfig::new();
 
         Vault {
@@ -76,9 +50,10 @@ impl Vault {
         if self.path.exists() {
             return Err(std::io::Error::new(std::io::ErrorKind::AlreadyExists, "Vault already exists"));
         }
-        let create_file_result = match &self.group {
+        // create in file system
+        match &self.group {
             None => {
-                // create vault in file system
+                // create vault folder in file system
                 match std::fs::File::create(&self.path) {
                     Ok(_) => Ok(()),
                     Err(e) => Err(e),
@@ -88,7 +63,7 @@ impl Vault {
                 // create group directory
                 match std::fs::create_dir_all(&group.path) {
                     Ok(_) => {
-                        // create vault in group directory
+                        // create vault folder in group directory
                         match std::fs::File::create(&self.path) {
                             Ok(_) => Ok(()),
                             Err(e) => Err(e),
@@ -97,20 +72,26 @@ impl Vault {
                     Err(e) => Err(e),
                 }
             },
-        };
+        }?;
         // write outer config to vault file
         let outer_config_toml = toml::to_string(&self.outer_config).unwrap();
-        let write_outer_config_result = match std::fs::write(&self.path, outer_config_toml) {
+        match std::fs::write(&self.path, outer_config_toml) {
             Ok(_) => Ok(()),
             Err(e) => Err(e),
-        };
+        }?;
 
-        create_file_result?;
-        write_outer_config_result?;
+
+        //openvault create
+//        OpenVault::create_init_db(self.clone())?;
+
         Ok(())
     }
-    pub fn open(&self) -> OpenVault {
-        OpenVault::new(self.clone()) 
+
+
+
+
+    pub fn get_name(&self) -> String {
+        self.name.clone()
     }
 }
 #[derive(Debug, Clone)]

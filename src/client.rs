@@ -1,7 +1,8 @@
 use std::path::{Path, PathBuf};
 use std::fs;
 
-use super::vault::{OpenVault, Vault};
+use crate::OpenVault;
+use crate::Vault;
 
 // !!! Dependencies !!!
 use toml;
