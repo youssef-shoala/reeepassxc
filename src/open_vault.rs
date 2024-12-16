@@ -108,6 +108,40 @@ impl OpenVault {
         }
         entries
     }
+    pub fn delete_entry(&self, username: String) {
+        //get open vault contents path
+        let binding = self.get_vault_contents_path();
+        let vault_contents_path = binding.as_path().to_str().unwrap();
+        //read from file
+        let mut entries: Vec<Entry> = Vec::new();
+        let mut contents = String::new();
+        let vaults_contents_path_name = vault_contents_path.to_string();
+        for line in std::fs::read_to_string(vaults_contents_path_name).unwrap().lines() {
+            let entry: Entry = serde_json::from_str(&line).unwrap();
+            if entry.get_username() != username {
+                println!("user in: {:?}", username);
+                println!("entry: {:?}", entry.username);
+                entries.push(entry);
+            }
+        }
+        println!("entries: {:?}", entries);
+        //write to file
+        //clear file
+        // Open the file with write and truncate options
+        let _ = OpenOptions::new()
+            .write(true)
+            .truncate(true) // Truncate the file to zero length
+            .open(vault_contents_path);
+
+        println!("File has been cleared");
+
+        let mut vault_contents = OpenOptions::new().append(true).open(vault_contents_path).unwrap();
+        for entry in entries {
+            let entry_json = serde_json::to_string(&entry).unwrap();
+            writeln!(vault_contents, "{}", entry_json).unwrap();
+        }
+        println!("successfully deleted {} from {:?}", username, vault_contents_path);
+    }
 
 
 
@@ -147,6 +181,9 @@ impl Entry {
             tags,
             notes,
         }
+    }
+    pub fn get_username(&self) -> String {
+        self.username.clone()
     }
 }
 

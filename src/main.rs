@@ -179,12 +179,23 @@ fn main() {
             let mut cli_mode = true;
             while cli_mode {
                 match user_input.as_str() {
+                    "delete" => {
+                        println!("Deleting entry");
+                        println!("Enter username: ");
+                        let entry_input = Client::get_user_input();
+                        let username = entry_input.clone();
+                        client.get_open_vault().unwrap().delete_entry(username);
+
+                        println!("Enter command: ");
+                        user_input = Client::get_user_input();
+                    },
                     "list" => {
                         println!("Listing entries");
                         let entries = client.get_open_vault().unwrap().list_entries();
                         for entry in entries {
                             println!("{:?}", entry);
                         }
+
                         println!("Enter command: ");
                         user_input = Client::get_user_input();
                     },
@@ -234,6 +245,7 @@ fn main() {
                     },
                     "hi" => {
                         println!("Hello");
+
                         println!("Enter command: ");
                         user_input = Client::get_user_input();
                     },
@@ -242,6 +254,7 @@ fn main() {
                     },
                     _ => {
                         println!("Invalid command");
+
                         println!("Enter command: ");
                         user_input = Client::get_user_input();
                     },
