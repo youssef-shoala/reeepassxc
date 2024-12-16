@@ -89,7 +89,6 @@ fn main() {
     let config = Config::read_from_file();
     match std::fs::create_dir_all(config.vaults_path.clone()) {
         Ok(_) => {
-//            println!("Vaults folder: {:?}", config.vaults_path.clone());
             ()
         },
         Err(e) => {
@@ -147,6 +146,7 @@ fn main() {
                 None => client.get_vaults_path().join(format!("{}.kbdx", vault_name)),
             };
             let target_vault = Vault::new(vault_path, vault_name, vault_group_path, vault_group_name);
+
             for vault in client.get_vaults() {
                 if target_vault.get_path() == vault.get_path() {
                     client.open_vault(target_vault.clone());
@@ -178,6 +178,7 @@ fn main() {
                 None => client.get_vaults_path().join(format!("{}.kbdx", vault_name)),
             };
             let vault = Vault::new(vault_path, vault_name, vault_group_path, vault_group_name);
+
             match vault.create() {
                 Ok(_) => {
                     println!("Vault created");

@@ -53,27 +53,13 @@ impl Vault {
         }
 
         // create init db
-        let open_vault_init_db: sled::Db = OpenVault::create_init_db();
-        // compress it
-        // encrypt it  
-        // write it to file
-        /*        
-        let compression = CompressionMethod::Deflated;
-        let cipher_id = AesMode::Aes256;
-        let encryption_iv = "".to_string();
-        let kdf_params = KDFParameters {
-            kdf: "argon2".to_string(),
-            rounds: 10,
-            memory: 1024,
-            parallelism: 1,
-            salt: "".to_string(),
-            seed: "".to_string(),
-        }; 
-        */
+        OpenVault::create_init_db();
+
+
+        // compress it,  encrypt it,  write it to vault file
         let compression = CompressionMethod::Deflated;
 //        let compression = CompressionMethod::Stored;
 //        let cipher_id = AesMode::Aes256;
-
         let dst_path = Path::new(self.path.as_os_str());
         let mut zip = zip::ZipWriter::new(std::fs::File::create(dst_path).unwrap());
         zip.set_flush_on_finish_file(true);
@@ -102,7 +88,7 @@ impl Vault {
             }
         }
         // destroy open vault
-//        std::fs::remove_dir_all("./reeepassdata/open-vault").unwrap();
+        std::fs::remove_dir_all("./reeepassdata/open-vault").unwrap();
         Ok(())
     }
     pub fn get_name(&self) -> String {
@@ -125,17 +111,5 @@ impl VaultGroup {
             name, 
         }
     }
-}
-
-
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct KDFParameters {
-    kdf: String,
-    rounds: u64,
-    memory: u64,
-    parallelism: u64,
-    salt: String,
-    seed: String,
 }
 
