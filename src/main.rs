@@ -167,7 +167,9 @@ fn main() {
 
             for vault in client.get_vaults() {
                 if target_vault.get_path() == vault.get_path() {
-                    client.open_vault(target_vault.clone());
+                    println!("Enter password to open vault: ");
+                    let password: &str = &Client::get_user_input();
+                    client.open_vault(target_vault.clone(), password);
                 }
             }
             println!("{:?}", client);
@@ -244,8 +246,10 @@ fn main() {
                     },
                 }
             }
-            // TODO REQUIRED save vault, compress and encrypt to file
-
+            // save vault, compress and encrypt to file
+            println!("Enter master password to save vault: ");
+            let password: &str = &Client::get_user_input();
+            OpenVault::encrypt_and_delete_db(client.get_open_vault().unwrap().get_vault(), password).unwrap();
         },
 
 
@@ -272,7 +276,9 @@ fn main() {
             };
             let vault = Vault::new(vault_path, vault_name, vault_group_path, vault_group_name);
 
-            match vault.create() {
+            println!("Enter master password: ");
+            let password: &str = &Client::get_user_input();
+            match vault.create(password) {
                 Ok(_) => {
                     println!("Vault created");
                     client.add_vault(vault);

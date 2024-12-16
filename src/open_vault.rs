@@ -10,6 +10,8 @@ use crate::Vault;
 // !!! Dependencies !!!
 use serde::{Deserialize, Serialize};
 use serde_json;
+use zip::CompressionMethod;
+use zip::AesMode;
 
 
 
@@ -19,16 +21,13 @@ pub struct OpenVault {
     vault_contents: PathBuf,
 }
 impl OpenVault {
-    pub fn new(vault: Vault) -> Self {
+    pub fn new(vault: Vault, password: &str) -> Self {
         // unzip vault file to sled db folder ./reepassdata/open-vault in file system
         let vault_path = vault.get_path();
         let file = std::fs::File::open(vault_path).unwrap();
-
         let mut archive = zip::ZipArchive::new(file).unwrap();
-//        println!("{:?}", archive);
-
         let content_file_name = "./reeepassdata/open-vault/open-vault.kdbx";
-        let mut content_file = archive.by_name_decrypt(content_file_name, b"password").unwrap();
+        let mut content_file = archive.by_name_decrypt(content_file_name, password.as_bytes()).unwrap();
         let mut content = String::new();
         content_file.read_to_string(&mut content).unwrap();
         println!("{}", content);
@@ -39,49 +38,41 @@ impl OpenVault {
         std::fs::create_dir_all(parent_folder).unwrap();
         let mut file = File::create(vault_contents.clone()).unwrap();
         file.write_all(content.as_bytes()).unwrap();
-
-//        match archive.extract("./") {
-//            Ok(_) => println!("Extracted"),
-//            Err(e) => println!("Error: {:?}", e),
-//        }
-
-
-
-//        // get contents from open-vault.kdbx in open-vault folder
-//        let vault_contents = File::open("./reeepassdata/open-vault/open-vault.kdbx").unwrap();
-//        println!("{:?}", vault_contents);
-//        let vault_contents_string = std::fs::read_to_string("./reeepassdata/open-vault/open-vault.kdbx").unwrap();
-//        println!("{:?}", vault_contents_string);
-       
         OpenVault {
             vault,
             vault_contents,
         }
     }
-// >>del below
-//    pub fn create_init_db() -> File {
-//        // create vault in file system as .rdbx text file
-//        let vault_content_path = Path::new("./reeepassdata/open-vault/open-vault.kdbx");
-//        std::fs::create_dir_all("./reeepassdata/open-vault").unwrap();
-//        let mut vault_contents_file = File::create(vault_content_path).unwrap();
-//        let vault_contents = "Test Line 1\nTest Line 2\nTest Line 3\n";
-//        vault_contents_file.write_all(vault_contents.as_bytes()).unwrap();
-//        vault_contents_file
-//    }
-//    pub fn create_init_db() -> sled::Db {
-//        // create vault in file system as sled db
-//        let vault_content_path = Path::new("./reeepassdata/open-vault");
-//        let vault_contents = sled::open(vault_content_path).unwrap();
-//        vault_contents.insert(b"inner_config", "test".as_bytes()).unwrap();
-//        println!("{:?}", vault_contents.get(b"inner_config").unwrap());
-//        println!("{:?}", vault_contents);
-//        vault_contents
-//    }
     pub fn empty_db() -> Result<(), std::io::Error> {
         // create vault in file system as .rdbx text file
         let vault_content_path = Path::new("./reeepassdata/open-vault/open-vault.kdbx");
         std::fs::create_dir_all("./reeepassdata/open-vault").unwrap();
         let mut vault_contents_file = File::create(vault_content_path).unwrap();
+        Ok(())
+    }
+    pub fn encrypt_and_delete_db(vault: Vault, password: &str) -> Result<(), std::io::Error> {
+        // compress it,  encrypt it,  write it to vault file
+        let compression = zip::CompressionMethod::Deflated;
+        let binding = vault.get_path();
+        let dst_path = Path::new(&binding);
+        let mut zip = zip::ZipWriter::new(std::fs::File::create(dst_path).unwrap());
+        zip.set_flush_on_finish_file(true);
+        let options = zip::write::SimpleFileOptions::default()
+            .compression_method(compression)
+            .with_aes_encryption(AesMode::Aes256, password)
+            .unix_permissions(0o755);
+        let path = Path::new("./reeepassdata/open-vault/open-vault.kdbx");
+        let path_str = path.to_str().unwrap();
+        println!("Adding file {:?} as {:?}...", path, path_str);
+        zip.start_file(path_str, options).unwrap();
+        let mut f = std::fs::File::open(path).unwrap();
+        let file_size = std::fs::metadata(path).unwrap().len();
+        let mut buffer = vec![0u8; file_size as usize];
+        f.read_exact(&mut buffer).unwrap();
+        println!("buffer: {:?}", &buffer);
+        zip.write_all(&buffer).unwrap();
+        buffer.clear();
+        std::fs::remove_dir_all("./reeepassdata/open-vault").unwrap();
         Ok(())
     }
 
@@ -114,10 +105,6 @@ impl OpenVault {
         let vault_contents_path = binding.as_path().to_str().unwrap();
         println!("{:?}", vault_contents_path);
         //read from file
-
-//        let mut vault_contents = File::open(vault_contents_path).unwrap();
-//        vault_contents.read_to_string(&mut contents).unwrap();
-
         let mut entries: Vec<Entry> = Vec::new();
         let mut contents = String::new();
         let vaults_contents_path_name = vault_contents_path.to_string();
@@ -126,21 +113,6 @@ impl OpenVault {
             entries.push(entry);
         }
         entries
-
-
-        
-//        for line in read_to_string(vault_contents_path.to_str()).unwrap().lines() {
-//            result.push(line.to_string())
-//        }
-
-//        while Some(vault_contents.read_line(&mut contents).unwrap()) {
-//            let contents = line.unwrap();
-//
-//            println!("{:?}", contents);
-//            let entry: Entry = serde_json::from_str(&contents).unwrap();
-//            entries.push(entry);
-//        }
-        //deserialize json
     }
 
 
@@ -148,7 +120,13 @@ impl OpenVault {
     fn get_vault_contents_path(&self) -> PathBuf {
         self.vault_contents.clone()
     }
+    pub fn get_vault(&self) -> Vault {
+        self.vault.clone()
+    }
 }
+
+
+// Entry
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Entry {
     username: String,

@@ -126,8 +126,8 @@ impl Client {
     pub fn add_vault(&mut self, vault: Vault) {
         self.vaults.push(vault);
     }
-    pub fn open_vault(&mut self, vault: Vault) {
-        let open_vault = OpenVault::new(vault);
+    pub fn open_vault(&mut self, vault: Vault, password: &str) {
+        let open_vault = OpenVault::new(vault, password);
         self.open_vault = Some(open_vault);
     }
     pub fn get_open_vault(&self) -> Option<&OpenVault> {
