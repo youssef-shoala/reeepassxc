@@ -65,7 +65,7 @@ impl Vault {
         zip.set_flush_on_finish_file(true);
         let options = zip::write::SimpleFileOptions::default()
             .compression_method(compression)
-//            .aes_encryption(Some("password"), AesMode::Aes256)
+            .with_aes_encryption(AesMode::Aes256, "password")
             .unix_permissions(0o755);
         for entry in WalkDir::new("./reeepassdata/open-vault") {
             let entry = entry.unwrap();
