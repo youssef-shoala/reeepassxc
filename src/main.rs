@@ -200,19 +200,20 @@ fn main() {
                         let username = entry_input.clone();
                         println!("Enter password (blank for client gen password): ");
                         entry_input = Client::get_user_input();
-                        let mut password = "".to_string();
-                        match entry_input.as_str() {
+                        let password = match entry_input.as_str() {
                             "" => {
                                 // generate password
                                 println!("Generating password");
                                 let generated_password_len = 20;
-                                password = Client::generate_password(generated_password_len);
+                                let password = Client::generate_password(generated_password_len);
                                 println!("Generated password: {:?}", password);
+                                password
                             },
                             _ => {
-                                password = entry_input.clone();
+                                let password = entry_input.clone();
+                                password
                             },
-                        }
+                        };
                         println!("Enter service name: ");
                         entry_input = Client::get_user_input();
                         let service_name = entry_input.clone();
