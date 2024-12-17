@@ -175,9 +175,9 @@ fn main() {
             }
 
             // enter cli mode
-            println!("Enter command: ");
-            let mut user_input = Client::get_user_input();
             while cli_mode {
+                println!("Enter command: ");
+                let user_input = Client::get_user_input();
                 match user_input.as_str() {
                     "delete" => {
                         println!("Deleting entry");
@@ -185,9 +185,6 @@ fn main() {
                         let entry_input = Client::get_user_input();
                         let username = entry_input.clone();
                         client.get_open_vault().unwrap().delete_entry(username);
-
-                        println!("Enter command: ");
-                        user_input = Client::get_user_input();
                     },
                     "list" => {
                         println!("Listing entries");
@@ -195,9 +192,6 @@ fn main() {
                         for entry in entries {
                             println!("{:?}", entry);
                         }
-
-                        println!("Enter command: ");
-                        user_input = Client::get_user_input();
                     },
                     "add" => {
                         println!("Adding entry");
@@ -239,15 +233,9 @@ fn main() {
                             Some(tags.split_whitespace().map(|s| s.to_string()).collect()), 
                             Some(notes)
                             );
-
-                        println!("Enter command: ");
-                        user_input = Client::get_user_input();
                     },
                     "hi" => {
                         println!("Hello");
-
-                        println!("Enter command: ");
-                        user_input = Client::get_user_input();
                     },
                     "exit" => {
                         cli_mode = false;
@@ -259,9 +247,6 @@ fn main() {
                     },
                     _ => {
                         println!("Invalid command");
-
-                        println!("Enter command: ");
-                        user_input = Client::get_user_input();
                     },
                 }
             }
