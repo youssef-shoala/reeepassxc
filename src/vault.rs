@@ -1,16 +1,6 @@
 use std::path::PathBuf;
-use std::path::Path;
-use std::io::Read;
-use std::io::Write;
 
 use crate::OpenVault;
-
-// !!! Dependencies !!!
-use serde::{Deserialize, Serialize};
-use zip::CompressionMethod;
-use zip::AesMode;
-use walkdir::WalkDir;
-
 
 
 

@@ -7,6 +7,7 @@ use crate::Vault;
 // !!! Dependencies !!!
 use toml;
 use serde::{Deserialize, Serialize};
+use rand::Rng;
 
 
 
@@ -140,4 +141,26 @@ impl Client {
         std::io::stdin().read_line(&mut user_input).unwrap();
         user_input.trim().to_string()
     }
+    pub fn generate_password(len: u64) -> String {
+//        let password = rand::thread_rng()
+//            .sample_iter(&Alphanumeric)
+//            .take(len as usize); 
+//        password
+        const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
+                                abcdefghijklmnopqrstuvwxyz\
+                                0123456789\
+                                !@#$%^&*()_+-=[]{}|;:,.<>?";
+        let mut rng = rand::thread_rng();
+
+        // Generate a password by randomly selecting characters
+        let password: String = (0..len)
+            .map(|_| {
+                let idx = rng.gen_range(0..CHARSET.len());
+                CHARSET[idx] as char
+            })
+            .collect();
+
+        password
+    }
+
 }

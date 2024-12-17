@@ -10,7 +10,6 @@ use crate::Vault;
 // !!! Dependencies !!!
 use serde::{Deserialize, Serialize};
 use serde_json;
-use zip::CompressionMethod;
 use zip::AesMode;
 
 
@@ -49,7 +48,7 @@ impl OpenVault {
         // create vault in file system as .rdbx text file
         let vault_content_path = Path::new("./reeepassdata/open-vault/open-vault.kdbx");
         std::fs::create_dir_all("./reeepassdata/open-vault").unwrap();
-        let mut vault_contents_file = File::create(vault_content_path).unwrap();
+        let _ = File::create(vault_content_path).unwrap();
         Ok(())
     }
     pub fn encrypt_and_delete_db(vault: Vault, password_hash: String) -> Result<(), std::io::Error> {
@@ -113,7 +112,6 @@ impl OpenVault {
         let vault_contents_path = binding.as_path().to_str().unwrap();
         //read from file
         let mut entries: Vec<Entry> = Vec::new();
-        let mut contents = String::new();
         let vaults_contents_path_name = vault_contents_path.to_string();
         for line in std::fs::read_to_string(vaults_contents_path_name).unwrap().lines() {
             let entry: Entry = serde_json::from_str(&line).unwrap();
@@ -127,7 +125,6 @@ impl OpenVault {
         let vault_contents_path = binding.as_path().to_str().unwrap();
         //read from file
         let mut entries: Vec<Entry> = Vec::new();
-        let mut contents = String::new();
         let vaults_contents_path_name = vault_contents_path.to_string();
         for line in std::fs::read_to_string(vaults_contents_path_name).unwrap().lines() {
             let entry: Entry = serde_json::from_str(&line).unwrap();

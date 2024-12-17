@@ -211,8 +211,8 @@ fn main() {
                             "" => {
                                 // generate password
                                 println!("Generating password");
-                                password = "".to_string();
-                                //password = Client::generate_password();
+                                let generated_password_len = 20;
+                                password = Client::generate_password(generated_password_len);
                                 println!("Generated password: {:?}", password);
                             },
                             _ => {
