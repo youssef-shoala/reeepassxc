@@ -262,18 +262,24 @@ fn main() {
                 Some(group_name) => Some(client.get_vaults_path().join(format!("{}/", group_name))),
                 None => None,
             };
-
-            for vault in client.get_vaults() {
-                match vault_group_path {
-                    Some(ref vault_group_path) => {
-                        if vault.get_group().unwrap().get_path() == *vault_group_path {
-                            println!("{:?}", vault);
+            match vault_group_path {
+                Some(vault_group_path) => {
+                    for vault in client.get_vaults() {
+                        match vault.get_group() {
+                            Some(group) => {
+                                if group.get_path() == vault_group_path {
+                                    println!("{:?}", vault);
+                                }
+                            },
+                            None => (),
                         }
-                    },
-                    None => {
+                    }
+                },
+                None => {
+                    for vault in client.get_vaults() {
                         println!("{:?}", vault);
-                    },
-                }
+                    }
+                },
             }
         },
 
@@ -317,15 +323,20 @@ fn main() {
                 if vault.get_name() == format!("{}.kbdx", vault_name) {
                     match vault_group_name {
                         Some(ref vault_group_name) => {
-                            if vault.get_group().unwrap().get_name() == *vault_group_name {
-                                match vault.delete() {
-                                    Ok(_) => {
-                                        println!("Vault deleted");
-                                    },
-                                    Err(e) => {
-                                        println!("Error deleting vault: {:?}", e);
-                                    },
-                                }
+                            match vault.get_group() {
+                                Some(group) => {
+                                    if group.get_name() == *vault_group_name {
+                                        match vault.delete() {
+                                            Ok(_) => {
+                                                println!("Vault deleted");
+                                            },
+                                            Err(e) => {
+                                                println!("Error deleting vault: {:?}", e);
+                                            },
+                                        }
+                                    }
+                                },
+                                None => (),
                             }
                         },
                         None => {
