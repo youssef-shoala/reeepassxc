@@ -54,43 +54,16 @@ impl Vault {
 
         // create init db
         OpenVault::empty_db().unwrap();
+//        let open_vault: Option<OpenVault> = Some(OpenVault::new(self.clone(), password));
+        let vault = self.clone();
+        let password_hash = password.to_string();
         // compress it,  encrypt it,  write it to vault file
-        OpenVault::encrypt_and_delete_db(self.clone(), password).unwrap();
-
-
-//        let compression = CompressionMethod::Deflated;
-////        let compression = CompressionMethod::Stored;
-////        let cipher_id = AesMode::Aes256;
-//        let dst_path = Path::new(self.path.as_os_str());
-//        let mut zip = zip::ZipWriter::new(std::fs::File::create(dst_path).unwrap());
-//        zip.set_flush_on_finish_file(true);
-//        let options = zip::write::SimpleFileOptions::default()
-//            .compression_method(compression)
-//            .with_aes_encryption(AesMode::Aes256, "password")
-//            .unix_permissions(0o755);
-//        for entry in WalkDir::new("./reeepassdata/open-vault") {
-//            let entry = entry.unwrap();
-//            let path = entry.path();
-//            if path.is_file() {
-//                let path_str = path.to_str().unwrap();
-//                println!("Adding file {:?} as {:?}...", path, path_str);
-//                zip.start_file(path_str, options).unwrap();
-//                let mut f = std::fs::File::open(path).unwrap();
-//                let file_size = std::fs::metadata(path).unwrap().len();
-//                let mut buffer = vec![0u8; file_size as usize];
-//                f.read_exact(&mut buffer).unwrap();
-//                println!("buffer: {:?}", &buffer);
-//                zip.write_all(&buffer).unwrap();
-//                buffer.clear();
-//            } else if path.is_dir() {
-//                let path_str = path.to_str().unwrap();
-//                println!("Adding directory {:?} as {:?}...", path, path_str);
-//                zip.add_directory(path_str, options).unwrap();
-//            }
-//        }
-//        // destroy open vault
-//        std::fs::remove_dir_all("./reeepassdata/open-vault").unwrap();
+        OpenVault::encrypt_and_delete_db(vault, password_hash).unwrap();
         Ok(())
+    }
+    pub fn delete(&self) -> Result<(), std::io::Error> {
+        let path_to_delete = self.path.clone();
+        std::fs::remove_file(path_to_delete)
     }
     pub fn get_name(&self) -> String {
         self.name.clone()
@@ -98,10 +71,17 @@ impl Vault {
     pub fn get_path(&self) -> PathBuf {
         self.path.clone()
     }
+    pub fn get_group(&self) -> Option<VaultGroup> {
+        let vault_group = match &self.group {
+            None => None,
+            Some(group) => Some(group.clone()),
+        };
+        vault_group
+    }
 }
 
 #[derive(Debug, Clone)]
-struct VaultGroup {
+pub struct VaultGroup {
     path: PathBuf,
     name: String,
 }
@@ -111,6 +91,12 @@ impl VaultGroup {
             path, 
             name, 
         }
+    }
+    pub fn get_path(&self) -> PathBuf {
+        self.path.clone()
+    }
+    pub fn get_name(&self) -> String {
+        self.name.clone()
     }
 }
 

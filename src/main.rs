@@ -164,19 +164,19 @@ fn main() {
             };
             let target_vault = Vault::new(vault_path, vault_name, vault_group_path, vault_group_name);
 
+            let mut cli_mode = false;
             for vault in client.get_vaults() {
                 if target_vault.get_path() == vault.get_path() {
                     println!("Enter password to open vault: ");
                     let password: &str = &Client::get_user_input();
                     client.open_vault(target_vault.clone(), password);
+                    cli_mode = true;
                 }
             }
-            println!("{:?}", client);
 
             // enter cli mode
             println!("Enter command: ");
             let mut user_input = Client::get_user_input();
-            let mut cli_mode = true;
             while cli_mode {
                 match user_input.as_str() {
                     "delete" => {
@@ -251,6 +251,11 @@ fn main() {
                     },
                     "exit" => {
                         cli_mode = false;
+                        // save vault, compress and encrypt to file
+                        let openvault = client.get_open_vault().unwrap();
+                        let vault = openvault.get_vault();
+                        let password_hash = openvault.get_password_hash();
+                        OpenVault::encrypt_and_delete_db(vault, password_hash).unwrap();
                     },
                     _ => {
                         println!("Invalid command");
@@ -260,16 +265,30 @@ fn main() {
                     },
                 }
             }
-            // save vault, compress and encrypt to file
-            println!("Enter master password to save vault: ");
-            let password: &str = &Client::get_user_input();
-            OpenVault::encrypt_and_delete_db(client.get_open_vault().unwrap().get_vault(), password).unwrap();
         },
 
 
 
         Commands::List {vault_group_name} => {
             println!("Listing vaults");
+            let group_name = vault_group_name.clone();
+            let vault_group_path = match group_name {
+                Some(group_name) => Some(client.get_vaults_path().join(format!("{}/", group_name))),
+                None => None,
+            };
+
+            for vault in client.get_vaults() {
+                match vault_group_path {
+                    Some(ref vault_group_path) => {
+                        if vault.get_group().unwrap().get_path() == *vault_group_path {
+                            println!("{:?}", vault);
+                        }
+                    },
+                    None => {
+                        println!("{:?}", vault);
+                    },
+                }
+            }
         },
 
 
@@ -308,6 +327,40 @@ fn main() {
 
         Commands::Delete {vault_name, vault_group_name} => {
             println!("Deleting vault: {:?}", vault_name);
+            for vault in client.get_vaults() {
+                if vault.get_name() == format!("{}.kbdx", vault_name) {
+                    match vault_group_name {
+                        Some(ref vault_group_name) => {
+                            if vault.get_group().unwrap().get_name() == *vault_group_name {
+                                match vault.delete() {
+                                    Ok(_) => {
+                                        println!("Vault deleted");
+                                    },
+                                    Err(e) => {
+                                        println!("Error deleting vault: {:?}", e);
+                                    },
+                                }
+                            }
+                        },
+                        None => {
+                            if vault.get_group().is_none() {
+                                match vault.delete() {
+                                    Ok(_) => {
+                                        println!("Vault deleted");
+                                    },
+                                    Err(e) => {
+                                        println!("Error deleting vault: {:?}", e);
+                                    },
+                                }
+                            }
+                        },
+                    }
+                }
+            }
         },
+
+
+
+
     }
 }

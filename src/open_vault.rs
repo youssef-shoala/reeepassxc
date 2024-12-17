@@ -15,19 +15,22 @@ use zip::AesMode;
 
 
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct OpenVault {
     vault: Vault,
     vault_contents: PathBuf,
+    password_hash: String,
 }
 impl OpenVault {
     pub fn new(vault: Vault, password: &str) -> Self {
+        //save password hash
+        let password_hash = password.to_string();
         // unzip vault file to sled db folder ./reepassdata/open-vault in file system
         let vault_path = vault.get_path();
         let file = std::fs::File::open(vault_path).unwrap();
         let mut archive = zip::ZipArchive::new(file).unwrap();
         let content_file_name = "./reeepassdata/open-vault/open-vault.kdbx";
-        let mut content_file = archive.by_name_decrypt(content_file_name, password.as_bytes()).unwrap();
+        let mut content_file = archive.by_name_decrypt(content_file_name, password_hash.as_bytes()).unwrap();
         let mut content = String::new();
         content_file.read_to_string(&mut content).unwrap();
         let vault_contents = Path::new(content_file_name).to_path_buf();
@@ -39,6 +42,7 @@ impl OpenVault {
         OpenVault {
             vault,
             vault_contents,
+            password_hash,
         }
     }
     pub fn empty_db() -> Result<(), std::io::Error> {
@@ -48,16 +52,25 @@ impl OpenVault {
         let mut vault_contents_file = File::create(vault_content_path).unwrap();
         Ok(())
     }
-    pub fn encrypt_and_delete_db(vault: Vault, password: &str) -> Result<(), std::io::Error> {
+    pub fn encrypt_and_delete_db(vault: Vault, password_hash: String) -> Result<(), std::io::Error> {
         // compress it,  encrypt it,  write it to vault file
         let compression = zip::CompressionMethod::Deflated;
         let binding = vault.get_path();
         let dst_path = Path::new(&binding);
+        let _ = match vault.get_group() {
+            Some(_) => {
+                let dst_parent = dst_path.parent().unwrap();
+                std::fs::create_dir_all(dst_parent).unwrap();
+            },
+            None => {
+                ()
+            },
+        };
         let mut zip = zip::ZipWriter::new(std::fs::File::create(dst_path).unwrap());
         zip.set_flush_on_finish_file(true);
         let options = zip::write::SimpleFileOptions::default()
             .compression_method(compression)
-            .with_aes_encryption(AesMode::Aes256, password)
+            .with_aes_encryption(AesMode::Aes256, password_hash.as_str())
             .unix_permissions(0o755);
         let path = Path::new("./reeepassdata/open-vault/open-vault.kdbx");
         let path_str = path.to_str().unwrap();
@@ -119,12 +132,9 @@ impl OpenVault {
         for line in std::fs::read_to_string(vaults_contents_path_name).unwrap().lines() {
             let entry: Entry = serde_json::from_str(&line).unwrap();
             if entry.get_username() != username {
-                println!("user in: {:?}", username);
-                println!("entry: {:?}", entry.username);
                 entries.push(entry);
             }
         }
-        println!("entries: {:?}", entries);
         //write to file
         //clear file
         // Open the file with write and truncate options
@@ -133,7 +143,6 @@ impl OpenVault {
             .truncate(true) // Truncate the file to zero length
             .open(vault_contents_path);
 
-        println!("File has been cleared");
 
         let mut vault_contents = OpenOptions::new().append(true).open(vault_contents_path).unwrap();
         for entry in entries {
@@ -150,6 +159,9 @@ impl OpenVault {
     }
     pub fn get_vault(&self) -> Vault {
         self.vault.clone()
+    }
+    pub fn get_password_hash(&self) -> String {
+        self.password_hash.clone()
     }
 }
 
