@@ -86,7 +86,7 @@ CLI mode:
 
 # Video Demo
 
-Link
+[Link](https://www.youtube.com/watch?v=ZZz4yn1QjOQ)
 
 # Contribution
 
